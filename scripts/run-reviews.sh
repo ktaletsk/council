@@ -170,6 +170,44 @@ fi
 mkdir -p "$OUTPUT_DIR"
 rm -f "$OUTPUT_DIR"/review_*.json
 
+# Write a temporary read-only opencode config into the target project.
+# This enforces that all opencode agents spawned for review cannot edit files.
+OPENCODE_CONFIG_DIR="$TARGET_DIR/.opencode"
+OPENCODE_CONFIG_FILE="$OPENCODE_CONFIG_DIR/opencode.json"
+OPENCODE_CONFIG_EXISTED=false
+mkdir -p "$OPENCODE_CONFIG_DIR"
+if [ -f "$OPENCODE_CONFIG_FILE" ]; then
+  OPENCODE_CONFIG_EXISTED=true
+  cp "$OPENCODE_CONFIG_FILE" "$OPENCODE_CONFIG_FILE.council-backup"
+fi
+cat > "$OPENCODE_CONFIG_FILE" << 'EOF'
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "edit": "deny",
+    "bash": {
+      "*": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "tools": { "write": false, "edit": false }
+    }
+  }
+}
+EOF
+
+# Ensure cleanup on exit
+cleanup() {
+  if [ "$OPENCODE_CONFIG_EXISTED" = true ]; then
+    mv "$OPENCODE_CONFIG_FILE.council-backup" "$OPENCODE_CONFIG_FILE"
+  else
+    rm -f "$OPENCODE_CONFIG_FILE"
+    rmdir "$OPENCODE_CONFIG_DIR" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT
+
 echo "Prompt:  $PROMPT_FILE"
 echo "Output:  $OUTPUT_DIR"
 echo -e "Target:  ${GREEN}$TARGET_DIR${NC}"
@@ -212,7 +250,7 @@ for i in "${!MODELS[@]}"; do
     opencode)
       (
         REVIEW_OUTPUT_FILE="$OUTPUT_DIR/review_${safe_name}.json" \
-        opencode run --model="$model" --agent council-reviewer --dir="$TARGET_DIR" "$PROMPT" \
+        opencode run --model="$model" --dir="$TARGET_DIR" "$PROMPT" \
           > /dev/null 2>&1
       ) &
       ;;
