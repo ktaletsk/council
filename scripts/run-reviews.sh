@@ -203,24 +203,33 @@ for i in "${!MODELS[@]}"; do
 
   case "$backend" in
     cursor)
-      # cursor-agent: --mode=plan (read-only), --force (allow shell commands like git diff)
-      cursor-agent -p --mode=plan --force --workspace="$TARGET_DIR" --model="$model" "$PROMPT" \
-        > "$OUTPUT_DIR/review_${safe_name}.json" 2>&1 &
+      (
+        REVIEW_OUTPUT_FILE="$OUTPUT_DIR/review_${safe_name}.json" \
+        cursor-agent -p --mode=plan --force --workspace="$TARGET_DIR" --model="$model" "$PROMPT" \
+          > /dev/null 2>&1
+      ) &
       ;;
     opencode)
-      # opencode: non-interactive mode, provider/model format, JSON output
-      opencode run --model="$model" --format=json "$PROMPT" \
-        > "$OUTPUT_DIR/review_${safe_name}.json" 2>&1 &
+      (
+        REVIEW_OUTPUT_FILE="$OUTPUT_DIR/review_${safe_name}.json" \
+        opencode run --model="$model" --dir="$TARGET_DIR" "$PROMPT" \
+          > /dev/null 2>&1
+      ) &
       ;;
     claude-code)
-      # claude: print mode (-p), plan permission mode (read-only), JSON output
-      claude -p --permission-mode plan --output-format json --model "$model" "$PROMPT" \
-        > "$OUTPUT_DIR/review_${safe_name}.json" 2>&1 &
+      (
+        cd "$TARGET_DIR"
+        REVIEW_OUTPUT_FILE="$OUTPUT_DIR/review_${safe_name}.json" \
+        claude -p --permission-mode plan --model "$model" "$PROMPT" \
+          > /dev/null 2>&1
+      ) &
       ;;
     codex)
-      # codex: non-interactive exec, read-only sandbox, JSON output
-      codex exec --sandbox read-only --model "$model" --json "$PROMPT" \
-        > "$OUTPUT_DIR/review_${safe_name}.json" 2>&1 &
+      (
+        REVIEW_OUTPUT_FILE="$OUTPUT_DIR/review_${safe_name}.json" \
+        codex exec --sandbox read-only --model "$model" "$PROMPT" \
+          > /dev/null 2>&1
+      ) &
       ;;
   esac
 
@@ -231,11 +240,14 @@ echo ""
 echo "Waiting for reviews to complete (this may take 1-3 minutes)..."
 echo ""
 
-# Wait for all processes
+# Wait for all processes and check output files
 COMPLETED=0
 FAILED=0
 for i in "${!PIDS[@]}"; do
-  if wait "${PIDS[$i]}"; then
+  wait "${PIDS[$i]}"
+  safe_name="${SANITIZED_MODELS[$i]}"
+  outfile="$OUTPUT_DIR/review_${safe_name}.json"
+  if [ -s "$outfile" ] && jq empty "$outfile" 2>/dev/null; then
     echo -e "  ${GREEN}✓${NC} Completed: ${MODELS[$i]} (${BACKENDS[$i]})"
     COMPLETED=$((COMPLETED + 1))
   else

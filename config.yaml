@@ -15,11 +15,29 @@
 # CLI tool you have access to.
 
 agents:
-  - backend: claude-code
-    model: sonnet
-
-  - backend: codex
-    model: gpt-5-codex
+  - backend: opencode
+    model: amazon-bedrock/us.anthropic.claude-opus-4-6-v1
 
   - backend: opencode
-    model: google/gemini-3-pro
+    model: amazon-bedrock/us.anthropic.claude-sonnet-4-6
+
+  - backend: opencode
+    model: amazon-bedrock/qwen.qwen3-coder-30b-a3b-v1:0
+
+  - backend: opencode
+    model: opencode/minimax-m2.5-free
+
+  - backend: opencode
+    model: opencode/trinity-large-preview-free
+
+  - backend: opencode
+    model: opencode/big-pickle
+
+  - backend: cursor
+    model: gemini-3.1-pro
+
+  - backend: cursor
+    model: grok
+
+  - backend: cursor
+    model: gpt-5.3-codex
