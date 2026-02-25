@@ -1,9 +1,9 @@
 ---
-name: multi-agent-code-review
-description: Run parallel code reviews with multiple AI agents, then synthesize into one report. Triggers on "review code" or "multi-agent review".
+name: council
+description: Run parallel code reviews with multiple AI agents, then synthesize into one report. Triggers on "review code" or "council review".
 ---
 
-# Multi-Agent Code Review Skill
+# Council Code Review Skill
 
 This skill runs the same code review prompt against multiple AI agents in parallel, then synthesizes their findings into a single comprehensive report. It supports **Claude Code**, **Codex CLI**, **OpenCode**, and **Cursor** as agent backends -- and you can mix them freely.
 
@@ -13,7 +13,7 @@ Activate this skill when the user asks to:
 - "Review my code"
 - "Run a code review"
 - "Review the staged changes"
-- "Do a multi-agent review"
+- "Do a council review"
 - "Get multiple perspectives on this code"
 
 ## CRITICAL: Target Directory
@@ -26,19 +26,19 @@ The user's project directory is where they started their Claude Code session - N
 
 ### Step 1: Identify the Target Repository
 
-Determine the user's project directory from the conversation context. This is typically shown at the start of the session or can be found by checking where CLAUDE.md is located. It is NOT `/Users/.../skills/multi-agent-code-review/`.
+Determine the user's project directory from the conversation context. This is typically shown at the start of the session or can be found by checking where CLAUDE.md is located. It is NOT `/Users/.../skills/council/`.
 
 ### Step 2: Run Parallel Reviews
 
 Run the review script and **pass the user's project directory as an argument**:
 
 ```bash
-~/.claude/skills/multi-agent-code-review/scripts/run-reviews.sh /path/to/users/project
+~/.claude/skills/council/scripts/run-reviews.sh /path/to/users/project
 ```
 
 For example, if the user is working in `/Users/ktaletskiy/git/jupyter_server`:
 ```bash
-~/.claude/skills/multi-agent-code-review/scripts/run-reviews.sh /Users/ktaletskiy/git/jupyter_server
+~/.claude/skills/council/scripts/run-reviews.sh /Users/ktaletskiy/git/jupyter_server
 ```
 
 **IMPORTANT**: Always pass the full path to the user's project as the first argument.
@@ -123,7 +123,7 @@ After writing the combined report, summarize the key findings:
 
 ## Configuration
 
-All configuration lives in `~/.claude/skills/multi-agent-code-review/config.yaml`:
+All configuration lives in `~/.claude/skills/council/config.yaml`:
 
 ```yaml
 # Each agent specifies its own backend and model.
@@ -159,13 +159,13 @@ Each agent entry requires a `backend` and a `model`:
 
 ### Other customization
 
-- **Review focus**: Edit `~/.claude/skills/multi-agent-code-review/prompts/review-prompt.md`
+- **Review focus**: Edit `~/.claude/skills/council/prompts/review-prompt.md`
 - **Thinking depth**: Add "think hard" or "ultrathink" to the prompt
 
 ## Files
 
 ```
-~/.claude/skills/multi-agent-code-review/
+~/.claude/skills/council/
 ├── SKILL.md              # This file
 ├── config.yaml           # Backend and model configuration
 ├── scripts/

@@ -1,4 +1,4 @@
-# multi-agent-code-review
+# council
 
 > **Ensemble code reviews.** Run the same review prompt against multiple AI 
 > agents in parallel, then synthesize their findings into one comprehensive 
@@ -14,7 +14,7 @@ Opus misses, while Gemini flags a performance issue neither noticed. By running
 the same critical review prompt against multiple agents and combining their 
 findings, you get more thorough coverage than any single model provides.
 
-| | Single Model Review | multi-agent-code-review |
+| | Single Model Review | council |
 |---|---|---|
 | One perspective | Yes | Multiple perspectives |
 | Model-specific blind spots | Possible | Cross-validated findings |
@@ -45,14 +45,14 @@ Codex, and Gemini through OpenCode all in the same review session.
 
 ```bash
 mkdir -p ~/.claude/skills
-git clone https://github.com/ktaletsk/multi-agent-code-review ~/.claude/skills/multi-agent-code-review
+git clone https://github.com/ktaletsk/council ~/.claude/skills/council
 ```
 
 ### Project skill (specific project)
 
 ```bash
 mkdir -p .claude/skills
-git clone https://github.com/ktaletsk/multi-agent-code-review .claude/skills/multi-agent-code-review
+git clone https://github.com/ktaletsk/council .claude/skills/council
 ```
 
 ## Requirements
@@ -152,7 +152,7 @@ cursor-agent --list-models
 Start a code review:
 
 ```
-/multi-agent-code-review
+/council
 ```
 
 Or trigger naturally:
@@ -162,13 +162,13 @@ Review my staged changes
 ```
 
 ```
-Run a multi-agent review
+Run a council review
 ```
 
 ## Example Session
 
 ```
-You: /multi-agent-code-review
+You: /council
 
 Claude: I'll run parallel code reviews using multiple AI agents.
 
@@ -232,7 +232,7 @@ Add keywords to `prompts/review-prompt.md`:
 ## Files
 
 ```
-multi-agent-code-review/
+council/
 ├── SKILL.md              # Skill definition for Claude Code
 ├── README.md             # This file
 ├── config.yaml           # Agent backend + model configuration
