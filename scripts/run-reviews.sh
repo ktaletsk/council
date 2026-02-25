@@ -212,7 +212,7 @@ for i in "${!MODELS[@]}"; do
     opencode)
       (
         REVIEW_OUTPUT_FILE="$OUTPUT_DIR/review_${safe_name}.json" \
-        opencode run --model="$model" --dir="$TARGET_DIR" "$PROMPT" \
+        opencode run --model="$model" --agent council-reviewer --dir="$TARGET_DIR" "$PROMPT" \
           > /dev/null 2>&1
       ) &
       ;;

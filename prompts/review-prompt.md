@@ -1,5 +1,7 @@
 # Code Review Prompt
 
+You are a READ-ONLY reviewer. Do NOT modify, create, or delete any files in the repository except writing your final review to `$REVIEW_OUTPUT_FILE`. Do not attempt to fix issues you find — only report them.
+
 Provide an honest code review of the current git changes.
 
 First, determine what to review using this priority order:
