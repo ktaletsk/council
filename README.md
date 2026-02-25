@@ -16,22 +16,28 @@ findings, you get more thorough coverage than any single model provides.
 
 | | Single Model Review | multi-agent-code-review |
 |---|---|---|
-| One perspective | ✅ | ❌ Multiple perspectives |
-| Model-specific blind spots | 😬 | ❌ Cross-validated findings |
-| Fast | ✅ | ❌ Parallel but slower |
-| Simple | ✅ | ❌ Requires Cursor CLI |
+| One perspective | Yes | Multiple perspectives |
+| Model-specific blind spots | Possible | Cross-validated findings |
+| Fast | Yes | Parallel but slower |
+| Simple | Yes | Needs at least one supported CLI |
 
 ## How It Works
 
-1. **Parallel Execution** — Spawns multiple `cursor-agent` processes simultaneously
+1. **Parallel Execution** — Spawns multiple agent processes simultaneously, each via its configured backend
 2. **Independent Reviews** — Each agent reviews staged git changes in read-only mode
-3. **Synthesis** — Claude Code combines outputs into a single deduplicated report
+3. **Synthesis** — The host agent combines outputs into a single deduplicated report
 
-### Default Models
+### Supported Backends
 
-- `opus-4.5-thinking` — Anthropic's strongest reasoning model
-- `gpt-5.2-high` — OpenAI with high thinking effort
-- `gemini-3-pro` — Google's flagship model
+| Backend | CLI Tool | Model Format | Requirement |
+|---------|----------|-------------|-------------|
+| **Claude Code** | `claude -p` | Alias (`sonnet`, `opus`) or full name | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + Anthropic account |
+| **Codex** | `codex exec` | Model name (e.g. `gpt-5-codex`) | [Codex CLI](https://github.com/openai/codex) (`npm i -g @openai/codex`) + ChatGPT plan or API key |
+| **OpenCode** | `opencode run` | `provider/model` (e.g. `google/gemini-3-pro`) | [OpenCode CLI](https://opencode.ai) + provider API keys |
+| **Cursor** | `cursor-agent` | Model name (e.g. `gemini-3.1-pro`) | [Cursor CLI](https://cursor.com/cli) + subscription |
+
+Backends can be mixed freely — run Claude through Claude Code, GPT through
+Codex, and Gemini through OpenCode all in the same review session.
 
 ## Installation
 
@@ -51,9 +57,95 @@ git clone https://github.com/ktaletsk/multi-agent-code-review .claude/skills/mul
 
 ## Requirements
 
-- [Cursor CLI](https://cursor.com/cli) (`cursor-agent`) installed and authenticated
-- Active Cursor subscription
-- Claude Code for synthesis
+**One or more** of the following:
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`claude`) with an Anthropic account
+- [Codex CLI](https://github.com/openai/codex) (`codex`) with a ChatGPT plan or OpenAI API key
+- [OpenCode CLI](https://opencode.ai) (`opencode`) with provider API keys configured
+- [Cursor CLI](https://cursor.com/cli) (`cursor-agent`) with an active Cursor subscription
+
+Plus:
+
+- A host agent (Claude Code, OpenCode, etc.) for synthesis
+
+## Configuration
+
+All settings are in `config.yaml` at the skill root. Each agent entry specifies
+its own backend and model, so you can mix and match freely:
+
+```yaml
+agents:
+  - backend: claude-code
+    model: sonnet
+
+  - backend: codex
+    model: gpt-5-codex
+
+  - backend: opencode
+    model: google/gemini-3-pro
+```
+
+### All Claude Code
+
+```yaml
+agents:
+  - backend: claude-code
+    model: opus
+  - backend: claude-code
+    model: sonnet
+  - backend: claude-code
+    model: haiku
+```
+
+### All Codex
+
+```yaml
+agents:
+  - backend: codex
+    model: gpt-5-codex
+  - backend: codex
+    model: gpt-5.1-codex
+```
+
+### All OpenCode
+
+```yaml
+agents:
+  - backend: opencode
+    model: anthropic/claude-sonnet-4-20250514
+  - backend: opencode
+    model: openai/gpt-5.1-codex
+  - backend: opencode
+    model: google/gemini-3-pro
+```
+
+### All Cursor
+
+```yaml
+agents:
+  - backend: cursor
+    model: opus-4.6-thinking
+  - backend: cursor
+    model: gpt-5.3-codex-high
+  - backend: cursor
+    model: gemini-3.1-pro
+```
+
+### Discover available models
+
+```bash
+# Claude Code (aliases: sonnet, opus, haiku, or full model names)
+claude --model
+
+# Codex
+codex    # then /model inside the TUI
+
+# OpenCode
+opencode models
+
+# Cursor
+cursor-agent --list-models
+```
 
 ## Usage
 
@@ -82,31 +174,28 @@ Claude: I'll run parallel code reviews using multiple AI agents.
 
 Running reviews on /Users/you/project...
 
-  ⏳ Starting: opus-4.5-thinking
-  ⏳ Starting: gpt-5.2-high
-  ⏳ Starting: gemini-3-pro
+  Agents:
+    claude-code / sonnet
+    codex       / gpt-5-codex
+    opencode    / google/gemini-3-pro
+
+  ⏳ Starting: sonnet (claude-code)
+  ⏳ Starting: gpt-5-codex (codex)
+  ⏳ Starting: google/gemini-3-pro (opencode)
 
 Waiting for reviews to complete (this may take 1-3 minutes)...
 
-  ✓ Completed: opus-4.5-thinking
-  ✓ Completed: gpt-5.2-high
-  ✓ Completed: gemini-3-pro
+  ✓ Completed: sonnet (claude-code)
+  ✓ Completed: gpt-5-codex (codex)
+  ✓ Completed: google/gemini-3-pro (opencode)
 
 Now synthesizing results...
 
 # Code Review Report
 
 ## Summary
-The changes introduce timestamp handling improvements with proper 
+The changes introduce timestamp handling improvements with proper
 fallback logic. All 3 reviewers found issues worth addressing.
-
-## Critical Issues
-None identified.
-
-## Medium Issues
-### 1. Pre-1970 timestamp edge case
-**File:** `filemanager.py` (line 60)
-Negative timestamps (valid for pre-1970 dates) are treated as invalid...
 
 [continued...]
 ```
@@ -117,27 +206,13 @@ Results are saved to your project's `.reviews/` directory:
 
 ```
 <your-project>/.reviews/
-├── review_opus-4.5-thinking.json
-├── review_gpt-5.2-high.json
-├── review_gemini-3-pro.json
+├── review_sonnet.json
+├── review_gpt-5-codex.json
+├── review_google__gemini-3-pro.json
 └── COMBINED_REVIEW.md
 ```
 
 ## Customization
-
-### Change Models
-
-Edit `scripts/run-reviews.sh`:
-
-```bash
-MODELS=(
-  "opus-4.5-thinking"
-  "gpt-5.2-high"
-  "gemini-3-pro"
-)
-```
-
-Run `cursor-agent --list-models` for available options.
 
 ### Change Review Focus
 
@@ -160,6 +235,7 @@ Add keywords to `prompts/review-prompt.md`:
 multi-agent-code-review/
 ├── SKILL.md              # Skill definition for Claude Code
 ├── README.md             # This file
+├── config.yaml           # Agent backend + model configuration
 ├── scripts/
 │   └── run-reviews.sh    # Parallel review runner
 └── prompts/
@@ -170,6 +246,8 @@ multi-agent-code-review/
 
 This skill uses the open [Agent Skills](https://agentskills.io) standard and should work with:
 - Claude Code (`~/.claude/skills/`)
+- OpenCode (`.opencode/skills/`)
+- Codex (`.codex/skills/`)
 - Cursor (`.cursor/skills/`)
 - VS Code, GitHub Copilot, and other compatible agents
 

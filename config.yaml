@@ -1,0 +1,25 @@
+# Multi-Agent Code Review Configuration
+# ======================================
+#
+# agents: List of reviewers to run in parallel. Each entry specifies:
+#   - backend: which CLI tool runs this reviewer
+#   - model:   model identifier (format depends on backend)
+#
+# Supported backends:
+#   "opencode"    → opencode run    (provider/model format)
+#   "claude-code" → claude -p       (model alias or full name)
+#   "codex"       → codex exec      (model name)
+#   "cursor"      → cursor-agent    (model name)
+#
+# You can mix backends freely — run each model through whichever
+# CLI tool you have access to.
+
+agents:
+  - backend: claude-code
+    model: sonnet
+
+  - backend: codex
+    model: gpt-5-codex
+
+  - backend: opencode
+    model: google/gemini-3-pro

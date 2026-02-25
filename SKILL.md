@@ -5,7 +5,7 @@ description: Run parallel code reviews with multiple AI agents, then synthesize 
 
 # Multi-Agent Code Review Skill
 
-This skill runs the same code review prompt against multiple AI agents in parallel using Cursor CLI, then synthesizes their findings into a single comprehensive report.
+This skill runs the same code review prompt against multiple AI agents in parallel, then synthesizes their findings into a single comprehensive report. It supports **Claude Code**, **Codex CLI**, **OpenCode**, and **Cursor** as agent backends -- and you can mix them freely.
 
 ## When to Use
 
@@ -43,8 +43,10 @@ For example, if the user is working in `/Users/ktaletskiy/git/jupyter_server`:
 
 **IMPORTANT**: Always pass the full path to the user's project as the first argument.
 
+The script reads `config.yaml` from the skill directory to determine which agents to run. Each agent entry specifies its own **backend** and **model**, so you can mix and match freely across all four supported backends.
+
 This will:
-- Run multiple agents in parallel (configurable in the script)
+- Run all configured agents in parallel, each via its own backend
 - Save individual JSON results to `<project>/.reviews/`
 - Take 1-3 minutes depending on code size
 
@@ -119,10 +121,44 @@ After writing the combined report, summarize the key findings:
 - Top 3 priority items to address
 - Overall verdict
 
-## Customization
+## Configuration
 
-The user can customize:
-- **Agents/Models**: Edit `~/.claude/skills/multi-agent-code-review/scripts/run-reviews.sh` → `MODELS` array
+All configuration lives in `~/.claude/skills/multi-agent-code-review/config.yaml`:
+
+```yaml
+# Each agent specifies its own backend and model.
+# Mix and match all four backends freely.
+agents:
+  - backend: claude-code
+    model: sonnet
+
+  - backend: codex
+    model: gpt-5-codex
+
+  - backend: opencode
+    model: google/gemini-3-pro
+```
+
+### Backends
+
+Each agent entry requires a `backend` and a `model`:
+
+| Backend | CLI command | `model` format | Requires |
+|---------|-----------|---------------|----------|
+| `claude-code` | `claude -p` | Alias (`sonnet`, `opus`) or full name (`claude-sonnet-4-20250514`) | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + Anthropic account |
+| `codex` | `codex exec` | Model name (e.g. `gpt-5-codex`) | [Codex CLI](https://github.com/openai/codex) + ChatGPT plan or API key |
+| `opencode` | `opencode run` | `provider/model` (e.g. `anthropic/claude-sonnet-4-20250514`) | [OpenCode CLI](https://opencode.ai) + provider API keys |
+| `cursor` | `cursor-agent` | Model name (e.g. `gemini-3.1-pro`) | [Cursor CLI](https://cursor.com/cli) + subscription |
+
+### Discovering available models
+
+- **Claude Code**: `claude --model` (aliases: `sonnet`, `opus`, `haiku`)
+- **Codex**: `/model` inside `codex` TUI, or see [Codex models docs](https://developers.openai.com/codex/models)
+- **OpenCode**: `opencode models`
+- **Cursor**: `cursor-agent --list-models`
+
+### Other customization
+
 - **Review focus**: Edit `~/.claude/skills/multi-agent-code-review/prompts/review-prompt.md`
 - **Thinking depth**: Add "think hard" or "ultrathink" to the prompt
 
@@ -131,6 +167,7 @@ The user can customize:
 ```
 ~/.claude/skills/multi-agent-code-review/
 ├── SKILL.md              # This file
+├── config.yaml           # Backend and model configuration
 ├── scripts/
 │   └── run-reviews.sh    # Parallel review runner
 └── prompts/
