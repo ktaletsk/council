@@ -4,7 +4,7 @@
 > agents in parallel, then synthesize their findings into one comprehensive 
 > report — because different models catch different bugs.
 
-[![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-Skill-blueviolet)](https://code.claude.com/docs/en/skills)
+[![skills.sh](https://skills.sh/b/ktaletsk/council)](https://skills.sh/ktaletsk/council)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Why This Exists
@@ -32,8 +32,8 @@ findings, you get more thorough coverage than any single model provides.
 | Backend | CLI Tool | Model Format | Requirement |
 |---------|----------|-------------|-------------|
 | **Claude Code** | `claude -p` | Alias (`sonnet`, `opus`) or full name | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + Anthropic account |
-| **Codex** | `codex exec` | Model name (e.g. `gpt-5-codex`) | [Codex CLI](https://github.com/openai/codex) (`npm i -g @openai/codex`) + ChatGPT plan or API key |
-| **OpenCode** | `opencode run` | `provider/model` (e.g. `google/gemini-3-pro`) | [OpenCode CLI](https://opencode.ai) + provider API keys |
+| **Codex** | `codex exec` | Model name (e.g. `gpt-5.3-codex`) | [Codex CLI](https://github.com/openai/codex) (`npm i -g @openai/codex`) + ChatGPT plan or API key |
+| **OpenCode** | `opencode run` | `provider/model` (e.g. `google/gemini-3.1-pro`) | [OpenCode CLI](https://opencode.ai) + provider API keys |
 | **Cursor** | `cursor-agent` | Model name (e.g. `gemini-3.1-pro`) | [Cursor CLI](https://cursor.com/cli) + subscription |
 
 Backends can be mixed freely — run Claude through Claude Code, GPT through
@@ -41,18 +41,19 @@ Codex, and Gemini through OpenCode all in the same review session.
 
 ## Installation
 
-### Personal skill (all projects)
+### skills.sh
 
 ```bash
-mkdir -p ~/.claude/skills
-git clone https://github.com/ktaletsk/council ~/.claude/skills/council
+npx skills add ktaletsk/council
 ```
 
-### Project skill (specific project)
+### Manual install
+
+Clone this repo into your agent's skills directory if you prefer not to use
+`skills.sh`:
 
 ```bash
-mkdir -p .claude/skills
-git clone https://github.com/ktaletsk/council .claude/skills/council
+git clone https://github.com/ktaletsk/council <agent-skills-dir>/council
 ```
 
 ## Requirements
@@ -79,10 +80,10 @@ agents:
     model: sonnet
 
   - backend: codex
-    model: gpt-5-codex
+    model: gpt-5.3-codex
 
   - backend: opencode
-    model: google/gemini-3-pro
+    model: google/gemini-3.1-pro
 ```
 
 ### All Claude Code
@@ -102,9 +103,9 @@ agents:
 ```yaml
 agents:
   - backend: codex
-    model: gpt-5-codex
+    model: gpt-5.5
   - backend: codex
-    model: gpt-5.1-codex
+    model: gpt-5.3-codex
 ```
 
 ### All OpenCode
@@ -112,11 +113,11 @@ agents:
 ```yaml
 agents:
   - backend: opencode
-    model: anthropic/claude-sonnet-4-20250514
+    model: anthropic/claude-opus-4-7
   - backend: opencode
-    model: openai/gpt-5.1-codex
+    model: openai/gpt-5.5
   - backend: opencode
-    model: google/gemini-3-pro
+    model: google/gemini-3.1-pro
 ```
 
 ### All Cursor
@@ -124,9 +125,9 @@ agents:
 ```yaml
 agents:
   - backend: cursor
-    model: opus-4.6-thinking
+    model: opus-4.7-thinking
   - backend: cursor
-    model: gpt-5.3-codex-high
+    model: gpt-5.5-high
   - backend: cursor
     model: gemini-3.1-pro
 ```
@@ -170,24 +171,24 @@ Run a council review
 ```
 You: /council
 
-Claude: I'll run parallel code reviews using multiple AI agents.
+Agent: I'll run parallel code reviews using multiple AI agents.
 
 Running reviews on /Users/you/project...
 
   Agents:
     claude-code / sonnet
-    codex       / gpt-5-codex
-    opencode    / google/gemini-3-pro
+    codex       / gpt-5.3-codex
+    opencode    / google/gemini-3.1-pro
 
   ⏳ Starting: sonnet (claude-code)
-  ⏳ Starting: gpt-5-codex (codex)
-  ⏳ Starting: google/gemini-3-pro (opencode)
+  ⏳ Starting: gpt-5.3-codex (codex)
+  ⏳ Starting: google/gemini-3.1-pro (opencode)
 
 Waiting for reviews to complete (this may take 1-3 minutes)...
 
   ✓ Completed: sonnet (claude-code)
-  ✓ Completed: gpt-5-codex (codex)
-  ✓ Completed: google/gemini-3-pro (opencode)
+  ✓ Completed: gpt-5.3-codex (codex)
+  ✓ Completed: google/gemini-3.1-pro (opencode)
 
 Now synthesizing results...
 
@@ -207,8 +208,8 @@ Results are saved to your project's `.reviews/` directory:
 ```
 <your-project>/.reviews/
 ├── review_sonnet.json
-├── review_gpt-5-codex.json
-├── review_google__gemini-3-pro.json
+├── review_gpt-5.3-codex.json
+├── review_google__gemini-3.1-pro.json
 └── COMBINED_REVIEW.md
 ```
 
@@ -233,7 +234,7 @@ Add keywords to `prompts/review-prompt.md`:
 
 ```
 council/
-├── SKILL.md              # Skill definition for Claude Code
+├── SKILL.md              # Agent Skills definition
 ├── README.md             # This file
 ├── config.yaml           # Agent backend + model configuration
 ├── scripts/
@@ -244,7 +245,9 @@ council/
 
 ## Compatibility
 
-This skill uses the open [Agent Skills](https://agentskills.io) standard and should work with:
+This skill is distributed through [skills.sh](https://skills.sh/ktaletsk/council)
+and uses the open [Agent Skills](https://agentskills.io) standard. It should
+work with:
 - Claude Code (`~/.claude/skills/`)
 - OpenCode (`.opencode/skills/`)
 - Codex (`.codex/skills/`)

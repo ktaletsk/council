@@ -16,7 +16,7 @@
 
 agents:
   - backend: opencode
-    model: amazon-bedrock/us.anthropic.claude-opus-4-6-v1
+    model: amazon-bedrock/us.anthropic.claude-opus-4-7
 
   - backend: opencode
     model: amazon-bedrock/us.anthropic.claude-sonnet-4-6
@@ -28,7 +28,7 @@ agents:
     model: opencode/minimax-m2.5-free
 
   - backend: opencode
-    model: opencode/trinity-large-preview-free
+    model: opencode/nemotron-3-super-free
 
   - backend: opencode
     model: opencode/big-pickle
@@ -40,4 +40,4 @@ agents:
     model: grok
 
   - backend: cursor
-    model: gpt-5.3-codex
+    model: gpt-5.5-high

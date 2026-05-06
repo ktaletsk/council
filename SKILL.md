@@ -20,25 +20,27 @@ Activate this skill when the user asks to:
 
 **You must pass the USER'S PROJECT DIRECTORY as an argument to the script.**
 
-The user's project directory is where they started their Claude Code session - NOT this skill's directory. Look for the git repository path in the conversation context (e.g., `/Users/.../git/jupyter_server`).
+The user's project directory is where they started their agent session - NOT this skill's directory. Look for the git repository path in the conversation context (e.g., `/Users/.../git/jupyter_server`).
 
 ## Workflow
 
 ### Step 1: Identify the Target Repository
 
-Determine the user's project directory from the conversation context. This is typically shown at the start of the session or can be found by checking where CLAUDE.md is located. It is NOT `/Users/.../skills/council/`.
+Determine the user's project directory from the conversation context. This is typically shown at the start of the session or can be found by checking where `AGENTS.md`, `CLAUDE.md`, or similar agent guidance is located. It is NOT `/Users/.../skills/council/`.
 
 ### Step 2: Run Parallel Reviews
 
-Run the review script and **pass the user's project directory as an argument**:
+Run this skill's review script and **pass the user's project directory as an argument**:
 
 ```bash
-~/.claude/skills/council/scripts/run-reviews.sh /path/to/users/project
+<skill-root>/scripts/run-reviews.sh /path/to/users/project
 ```
 
-For example, if the user is working in `/Users/ktaletskiy/git/jupyter_server`:
+Resolve `<skill-root>` to the directory containing this `SKILL.md`.
+
+For example, if the user is working in `/Users/you/git/jupyter_server`:
 ```bash
-~/.claude/skills/council/scripts/run-reviews.sh /Users/ktaletskiy/git/jupyter_server
+<skill-root>/scripts/run-reviews.sh /Users/you/git/jupyter_server
 ```
 
 **IMPORTANT**: Always pass the full path to the user's project as the first argument.
@@ -123,7 +125,7 @@ After writing the combined report, summarize the key findings:
 
 ## Configuration
 
-All configuration lives in `~/.claude/skills/council/config.yaml`:
+All configuration lives in `<skill-root>/config.yaml`:
 
 ```yaml
 # Each agent specifies its own backend and model.
@@ -133,10 +135,10 @@ agents:
     model: sonnet
 
   - backend: codex
-    model: gpt-5-codex
+    model: gpt-5.3-codex
 
   - backend: opencode
-    model: google/gemini-3-pro
+    model: google/gemini-3.1-pro
 ```
 
 ### Backends
@@ -145,9 +147,9 @@ Each agent entry requires a `backend` and a `model`:
 
 | Backend | CLI command | `model` format | Requires |
 |---------|-----------|---------------|----------|
-| `claude-code` | `claude -p` | Alias (`sonnet`, `opus`) or full name (`claude-sonnet-4-20250514`) | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + Anthropic account |
-| `codex` | `codex exec` | Model name (e.g. `gpt-5-codex`) | [Codex CLI](https://github.com/openai/codex) + ChatGPT plan or API key |
-| `opencode` | `opencode run` | `provider/model` (e.g. `anthropic/claude-sonnet-4-20250514`) | [OpenCode CLI](https://opencode.ai) + provider API keys |
+| `claude-code` | `claude -p` | Alias (`sonnet`, `opus`) or full name (`claude-opus-4-7`) | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + Anthropic account |
+| `codex` | `codex exec` | Model name (e.g. `gpt-5.3-codex`) | [Codex CLI](https://github.com/openai/codex) + ChatGPT plan or API key |
+| `opencode` | `opencode run` | `provider/model` (e.g. `anthropic/claude-opus-4-7`) | [OpenCode CLI](https://opencode.ai) + provider API keys |
 | `cursor` | `cursor-agent` | Model name (e.g. `gemini-3.1-pro`) | [Cursor CLI](https://cursor.com/cli) + subscription |
 
 ### Discovering available models
@@ -159,13 +161,13 @@ Each agent entry requires a `backend` and a `model`:
 
 ### Other customization
 
-- **Review focus**: Edit `~/.claude/skills/council/prompts/review-prompt.md`
+- **Review focus**: Edit `<skill-root>/prompts/review-prompt.md`
 - **Thinking depth**: Add "think hard" or "ultrathink" to the prompt
 
 ## Files
 
 ```
-~/.claude/skills/council/
+council/
 ├── SKILL.md              # This file
 ├── config.yaml           # Backend and model configuration
 ├── scripts/
