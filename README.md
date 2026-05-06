@@ -4,7 +4,7 @@
 > agents in parallel, then synthesize their findings into one comprehensive 
 > report — because different models catch different bugs.
 
-[![skills.sh](https://skills.sh/b/ktaletsk/council)](https://skills.sh/ktaletsk/council)
+[![AI Agent Skill](https://img.shields.io/badge/AI%20Agent-Skill-blueviolet)](https://agentskills.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Why This Exists
@@ -41,19 +41,45 @@ Codex, and Gemini through OpenCode all in the same review session.
 
 ## Installation
 
-### skills.sh
+The default path is the **Skills CLI** (`npx skills`): it pulls this repo from
+GitHub and installs into the right agent skill directories for Cursor and many
+other AI coding agents. You need [Node.js](https://nodejs.org/) so `npx` is
+available.
+
+### Recommended: `npx skills`
+
+**All projects (global / user-level):**
+
+```bash
+npx skills add ktaletsk/council -g
+```
+
+**This repository only (from inside the project):**
 
 ```bash
 npx skills add ktaletsk/council
 ```
 
-### Manual install
+Use `-a <agent>` to target specific agents (e.g. `-a cursor`), or run without
+it and follow the prompts. To update later: `npx skills update` (add `-g` for
+global installs). More skills: [skills.sh](https://skills.sh/).
 
-Clone this repo into your agent's skills directory if you prefer not to use
-`skills.sh`:
+### Manual: `git clone`
+
+If you prefer to place the skill yourself:
+
+**Personal skill (all projects)**
 
 ```bash
-git clone https://github.com/ktaletsk/council <agent-skills-dir>/council
+mkdir -p ~/.claude/skills
+git clone https://github.com/ktaletsk/council ~/.claude/skills/council
+```
+
+**Project skill (specific project)**
+
+```bash
+mkdir -p .claude/skills
+git clone https://github.com/ktaletsk/council .claude/skills/council
 ```
 
 ## Requirements
