@@ -13,31 +13,44 @@
 #
 # You can mix backends freely — run each model through whichever
 # CLI tool you have access to.
+#
+# Model IDs verified against `opencode models` and `cursor-agent models`
+# (a.k.a. `agent models`) as of this revision.
 
 agents:
+  # --- Frontier proprietary (opencode / Bedrock) ---
   - backend: opencode
-    model: amazon-bedrock/us.anthropic.claude-opus-4-7
+    model: amazon-bedrock/us.anthropic.claude-opus-4-8
 
   - backend: opencode
     model: amazon-bedrock/us.anthropic.claude-sonnet-4-6
 
+  # --- Frontier open-source / OSS (Bedrock) ---
   - backend: opencode
-    model: amazon-bedrock/qwen.qwen3-coder-30b-a3b-v1:0
+    model: amazon-bedrock/qwen.qwen3-coder-next
 
   - backend: opencode
-    model: opencode/minimax-m2.5-free
+    model: amazon-bedrock/zai.glm-5
+
+  - backend: opencode
+    model: amazon-bedrock/moonshotai.kimi-k2.5
+
+  # --- Free models (opencode zen) ---
+  - backend: opencode
+    model: opencode/big-pickle
+
+  - backend: opencode
+    model: opencode/minimax-m3-free
 
   - backend: opencode
     model: opencode/nemotron-3-super-free
 
-  - backend: opencode
-    model: opencode/big-pickle
-
+  # --- Cursor backend ---
   - backend: cursor
     model: gemini-3.1-pro
 
   - backend: cursor
-    model: grok
+    model: grok-4.3
 
   - backend: cursor
     model: gpt-5.5-high

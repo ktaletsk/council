@@ -39,6 +39,26 @@ findings, you get more thorough coverage than any single model provides.
 Backends can be mixed freely — run Claude through Claude Code, GPT through
 Codex, and Gemini through OpenCode all in the same review session.
 
+### Use the subscriptions and credits you already have
+
+You don't need to sign up for anything new. council drives whichever agent
+CLIs are already installed and authenticated on your machine, so each reviewer
+bills against access you're already paying for:
+
+- **Claude Code** runs on your existing **Claude Pro/Max** subscription (or an
+  Anthropic API key) — no separate API spend.
+- **Codex** uses your **ChatGPT Plus/Pro/Team** plan (or an OpenAI API key).
+- **Cursor** runs through your active **Cursor subscription** — the models in
+  `cursor-agent models` are included in your plan.
+- **OpenCode** uses whatever providers you've configured, including its own
+  **free models** (e.g. `opencode/big-pickle`) that cost nothing at all.
+
+Because backends mix freely, you can assemble a multi-model council entirely
+from plans you already subscribe to — for example, Opus via Cursor, GPT via
+your ChatGPT plan through Codex, and a couple of free OpenCode models — without
+provisioning a single new API key. If a CLI isn't installed or signed in,
+council simply skips that reviewer; just configure the ones you have.
+
 ## Installation
 
 The default path is the **Skills CLI** (`npx skills`): it pulls this repo from
@@ -139,11 +159,11 @@ agents:
 ```yaml
 agents:
   - backend: opencode
-    model: anthropic/claude-opus-4-7
+    model: amazon-bedrock/us.anthropic.claude-opus-4-8
   - backend: opencode
-    model: openai/gpt-5.5
+    model: amazon-bedrock/zai.glm-5
   - backend: opencode
-    model: google/gemini-3.1-pro
+    model: opencode/big-pickle   # free
 ```
 
 ### All Cursor
@@ -151,7 +171,7 @@ agents:
 ```yaml
 agents:
   - backend: cursor
-    model: opus-4.7-thinking
+    model: claude-opus-4-8-thinking-high
   - backend: cursor
     model: gpt-5.5-high
   - backend: cursor

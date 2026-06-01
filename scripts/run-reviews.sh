@@ -197,16 +197,80 @@ cat > "$OPENCODE_CONFIG_FILE" << 'EOF'
 }
 EOF
 
-# Ensure cleanup on exit
+# Track spawned agent PIDs so we can reap them (and their child
+# process groups) if this script is interrupted or exits early.
+PIDS=()
+
+# Ensure cleanup on exit: kill any still-running agents, then restore config.
+# Recursively collect a PID and all of its descendant PIDs.
+# Backends like opencode fork/re-exec into their own process group,
+# so killing the job's PID alone (or its assumed PGID) can miss the
+# real worker and its server children. Walking the process tree is the
+# portable way to guarantee nothing is left behind.
+collect_descendants() {
+  local parent="$1"
+  echo "$parent"
+  local child
+  for child in $(pgrep -P "$parent" 2>/dev/null); do
+    collect_descendants "$child"
+  done
+}
+
+kill_tree() {
+  local sig="$1"; shift
+  local root
+  for root in "$@"; do
+    [ -z "$root" ] && continue
+    local p
+    for p in $(collect_descendants "$root"); do
+      kill "-$sig" "$p" 2>/dev/null || true
+    done
+    # Also target the actual process group the root belongs to, in case
+    # a child detached into a new group we did not capture above.
+    local pgid
+    pgid=$(ps -o pgid= -p "$root" 2>/dev/null | tr -d ' ')
+    if [ -n "$pgid" ]; then
+      kill "-$sig" "-$pgid" 2>/dev/null || true
+    fi
+  done
+}
+
+_CLEANUP_DONE=false
 cleanup() {
+  # Never let errexit abort cleanup partway through.
+  set +e
+  # Guard against running twice (e.g. a signal trap followed by the EXIT trap).
+  if [ "$_CLEANUP_DONE" = true ]; then
+    return
+  fi
+  _CLEANUP_DONE=true
+
+  # Terminate every spawned agent along with all of its descendants and
+  # process group. This prevents orphaned `opencode run` (and similar)
+  # processes from accumulating when the script exits or is interrupted.
+  if [ "${#PIDS[@]}" -gt 0 ]; then
+    kill_tree TERM "${PIDS[@]}"
+    sleep 1
+    kill_tree KILL "${PIDS[@]}"
+  fi
+
+  # Restore the target project's opencode config to its original state.
   if [ "$OPENCODE_CONFIG_EXISTED" = true ]; then
-    mv "$OPENCODE_CONFIG_FILE.council-backup" "$OPENCODE_CONFIG_FILE"
+    mv "$OPENCODE_CONFIG_FILE.council-backup" "$OPENCODE_CONFIG_FILE" 2>/dev/null
   else
     rm -f "$OPENCODE_CONFIG_FILE"
     rmdir "$OPENCODE_CONFIG_DIR" 2>/dev/null || true
   fi
 }
+
+# On a fatal signal, run cleanup then exit non-zero so the EXIT trap's
+# second invocation is a no-op (guarded above).
+on_signal() {
+  cleanup
+  exit 130
+}
 trap cleanup EXIT
+trap on_signal INT TERM HUP
 
 echo "Prompt:  $PROMPT_FILE"
 echo "Output:  $OUTPUT_DIR"
@@ -230,7 +294,6 @@ sanitize_model() {
   echo "$1" | tr '/' '__'
 }
 
-PIDS=()
 SANITIZED_MODELS=()
 for i in "${!MODELS[@]}"; do
   model="${MODELS[$i]}"
