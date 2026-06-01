@@ -31,7 +31,7 @@ findings, you get more thorough coverage than any single model provides.
 
 | Backend | CLI Tool | Model Format | Requirement |
 |---------|----------|-------------|-------------|
-| **Claude Code** | `claude -p` | Alias (`sonnet`, `opus`) or full name | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + Anthropic account |
+| **Claude Code** | `claude -p` | Alias (`sonnet`, `opus`) or full name | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + Anthropic account (`claude -p` draws from a separate Agent SDK credit, not your interactive Pro/Max limit — see note below) |
 | **Codex** | `codex exec` | Model name (e.g. `gpt-5.3-codex`) | [Codex CLI](https://github.com/openai/codex) (`npm i -g @openai/codex`) + ChatGPT plan or API key |
 | **OpenCode** | `opencode run` | `provider/model` (e.g. `google/gemini-3.1-pro`) | [OpenCode CLI](https://opencode.ai) + provider API keys |
 | **Cursor** | `cursor-agent` | Model name (e.g. `gemini-3.1-pro`) | [Cursor CLI](https://cursor.com/cli) + subscription |
@@ -41,23 +41,35 @@ Codex, and Gemini through OpenCode all in the same review session.
 
 ### Use the subscriptions and credits you already have
 
-You don't need to sign up for anything new. council drives whichever agent
-CLIs are already installed and authenticated on your machine, so each reviewer
-bills against access you're already paying for:
+council drives whichever agent CLIs are already installed and authenticated on
+your machine, so most reviewers bill against access you're already paying for:
 
-- **Claude Code** runs on your existing **Claude Pro/Max** subscription (or an
-  Anthropic API key) — no separate API spend.
 - **Codex** uses your **ChatGPT Plus/Pro/Team** plan (or an OpenAI API key).
 - **Cursor** runs through your active **Cursor subscription** — the models in
   `cursor-agent models` are included in your plan.
 - **OpenCode** uses whatever providers you've configured, including its own
   **free models** (e.g. `opencode/big-pickle`) that cost nothing at all.
 
-Because backends mix freely, you can assemble a multi-model council entirely
-from plans you already subscribe to — for example, Opus via Cursor, GPT via
-your ChatGPT plan through Codex, and a couple of free OpenCode models — without
-provisioning a single new API key. If a CLI isn't installed or signed in,
-council simply skips that reviewer; just configure the ones you have.
+> **Heads up on the `claude-code` backend.** council invokes Claude Code in
+> non-interactive mode (`claude -p`), and that is **not** simply covered by your
+> normal Pro/Max usage the way interactive Claude Code is. Per Anthropic, as of
+> **June 15, 2026** `claude -p` (and the Agent SDK) stop drawing from your
+> interactive subscription limits and instead draw from a separate, capped
+> **monthly Agent SDK credit** you have to opt into once — $20 on Pro, $100 on
+> Max 5x, $200 on Max 20x. When that credit runs out, requests fall through to
+> pay-as-you-go API billing (if you've enabled usage credits) or stop until the
+> credit refreshes. In other words, you **cannot easily run a large council on
+> the `claude-code` backend off a Pro/Max plan** — budget for the Agent SDK
+> credit or an API key, or prefer the other backends. See
+> [Use the Claude Agent SDK with your Claude plan](https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan).
+> (You can still get Claude models without this caveat by running them through
+> the **Cursor** or **OpenCode** backends instead.)
+
+Because backends mix freely, you can assemble a multi-model council almost
+entirely from plans you already subscribe to — for example, Opus via Cursor,
+GPT via your ChatGPT plan through Codex, and a couple of free OpenCode models —
+without provisioning a single new API key. If a CLI isn't installed or signed
+in, council simply skips that reviewer; just configure the ones you have.
 
 ## Installation
 
@@ -106,7 +118,7 @@ git clone https://github.com/ktaletsk/council .claude/skills/council
 
 **One or more** of the following:
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`claude`) with an Anthropic account
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`claude`) with an Anthropic account — note that council uses `claude -p`, which bills against the Agent SDK monthly credit (or API), not your interactive Pro/Max usage; see [Use the subscriptions and credits you already have](#use-the-subscriptions-and-credits-you-already-have)
 - [Codex CLI](https://github.com/openai/codex) (`codex`) with a ChatGPT plan or OpenAI API key
 - [OpenCode CLI](https://opencode.ai) (`opencode`) with provider API keys configured
 - [Cursor CLI](https://cursor.com/cli) (`cursor-agent`) with an active Cursor subscription
