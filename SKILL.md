@@ -45,6 +45,26 @@ For example, if the user is working in `/Users/you/git/jupyter_server`:
 
 **IMPORTANT**: Always pass the full path to the user's project as the first argument.
 
+#### Passing review instructions (target branch, focus areas, etc.)
+
+If the user wants the review scoped or focused -- most commonly a **target/base
+branch** to diff against, but also things like "focus on the auth flow" or
+"ignore test files" -- pass those as an optional second argument (or via the
+`REVIEW_INSTRUCTIONS` env var). They are appended to the prompt at runtime only;
+the committed prompt template is never edited.
+
+```bash
+# Review a PR against its actual base branch
+<skill-root>/scripts/run-reviews.sh /Users/you/git/project "Review the changes on this branch against base branch PREX-1553 (use 'git diff PREX-1553...HEAD'), not main."
+
+# Focus the review
+<skill-root>/scripts/run-reviews.sh /Users/you/git/project "Focus on security of the new upload endpoint; skip style nits."
+```
+
+Ask the user for the base branch when reviewing a PR, since the default prompt
+diffs against `main`. Do NOT edit `prompts/review-prompt.md` to inject per-run
+context -- use this argument instead.
+
 The script reads `config.yaml` from the skill directory to determine which agents to run. Each agent entry specifies its own **backend** and **model**, so you can mix and match freely across all four supported backends.
 
 This will:

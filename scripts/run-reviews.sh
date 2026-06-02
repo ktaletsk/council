@@ -1,11 +1,21 @@
 #!/bin/bash
 # run-reviews.sh - Multi-agent parallel code review
 #
-# Usage: run-reviews.sh TARGET_DIR
-#   TARGET_DIR: The directory/repository to review (REQUIRED)
+# Usage: run-reviews.sh TARGET_DIR [INSTRUCTIONS]
+#   TARGET_DIR:   The directory/repository to review (REQUIRED)
+#   INSTRUCTIONS: Optional free-form review instructions for this run, e.g.
+#                 a target/base branch to diff against or areas to focus on.
+#                 May also be supplied via the REVIEW_INSTRUCTIONS env var.
+#                 These are appended to the prompt at runtime ONLY -- the
+#                 committed prompt template is never modified.
+#
+# Examples:
+#   run-reviews.sh /path/to/project
+#   run-reviews.sh /path/to/project "Review against base branch PREX-1553"
+#   REVIEW_INSTRUCTIONS="Focus on the new auth flow" run-reviews.sh /path/to/project
 #
 # Reads config.yaml for a list of agents (each with its own backend + model),
-# then spawns them in parallel to review staged git changes.
+# then spawns them in parallel to review the git changes.
 # Results are saved to TARGET_DIR/.reviews/
 
 set -e
@@ -25,6 +35,10 @@ TARGET_DIR="$1"
 
 # Resolve to absolute path
 TARGET_DIR="$(cd "$TARGET_DIR" && pwd)"
+
+# Optional per-run review instructions. Precedence: 2nd positional arg, then
+# the REVIEW_INSTRUCTIONS env var. Appended to the prompt at runtime only.
+REVIEW_INSTRUCTIONS="${2:-${REVIEW_INSTRUCTIONS:-}}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(dirname "$SCRIPT_DIR")"
@@ -306,6 +320,9 @@ trap on_signal INT TERM HUP
 echo "Prompt:  $PROMPT_FILE"
 echo "Output:  $OUTPUT_DIR"
 echo -e "Target:  ${GREEN}$TARGET_DIR${NC}"
+if [ -n "$REVIEW_INSTRUCTIONS" ]; then
+  echo -e "Extra:   ${YELLOW}$REVIEW_INSTRUCTIONS${NC}"
+fi
 echo ""
 echo "Agents:"
 for i in "${!MODELS[@]}"; do
@@ -317,6 +334,18 @@ echo ""
 
 # Read prompt
 PROMPT="$(cat "$PROMPT_FILE")"
+
+# Append any per-run instructions so reviewers see them as part of the prompt.
+if [ -n "$REVIEW_INSTRUCTIONS" ]; then
+  PROMPT="$PROMPT
+
+## Additional Instructions For This Review
+
+The following instructions are specific to this review run and take
+precedence over the general guidance above where they conflict:
+
+$REVIEW_INSTRUCTIONS"
+fi
 
 # --- Launch agents in parallel ---
 
