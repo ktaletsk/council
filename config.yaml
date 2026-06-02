@@ -46,11 +46,18 @@ agents:
     model: opencode/nemotron-3-super-free
 
   # --- Cursor backend ---
+  # Composer 2.5 draws from Cursor's "Auto + Composer" usage pool, which is
+  # separate from the per-model "API" pool. The models below (gemini/grok/
+  # gpt-5.5) use the API pool; they are commented out because that pool was
+  # exhausted -- re-enable them once it resets (monthly billing cycle).
   - backend: cursor
-    model: gemini-3.1-pro
+    model: composer-2.5
 
-  - backend: cursor
-    model: grok-4.3
-
-  - backend: cursor
-    model: gpt-5.5-high
+  # - backend: cursor
+  #   model: gemini-3.1-pro
+  #
+  # - backend: cursor
+  #   model: grok-4.3
+  #
+  # - backend: cursor
+  #   model: gpt-5.5-high
