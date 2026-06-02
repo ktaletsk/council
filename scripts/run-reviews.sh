@@ -363,7 +363,9 @@ for i in "${!MODELS[@]}"; do
 
   # Remove only THIS agent's previous output (if any) so a rerun overwrites
   # its own file without destroying other agents' or other runs' results.
-  rm -f "$OUTPUT_DIR/review_${safe_name}.json"
+  # Use -rf and ignore errors: a misbehaving prior agent can leave a
+  # directory at this path, which must not abort the whole run (set -e).
+  rm -rf "$OUTPUT_DIR/review_${safe_name}.json" 2>/dev/null || true
 
   echo "  ⏳ Starting: $model ($backend)"
 
@@ -413,7 +415,7 @@ for i in "${!PIDS[@]}"; do
   wait "${PIDS[$i]}"
   safe_name="${SANITIZED_MODELS[$i]}"
   outfile="$OUTPUT_DIR/review_${safe_name}.json"
-  if [ -s "$outfile" ] && jq empty "$outfile" 2>/dev/null; then
+  if [ -f "$outfile" ] && [ -s "$outfile" ] && jq empty "$outfile" 2>/dev/null; then
     echo -e "  ${GREEN}✓${NC} Completed: ${MODELS[$i]} (${BACKENDS[$i]})"
     COMPLETED=$((COMPLETED + 1))
   else
