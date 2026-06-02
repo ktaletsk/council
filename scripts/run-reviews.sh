@@ -179,7 +179,13 @@ mkdir -p "$OUTPUT_DIR"
 rm -f "$OUTPUT_DIR"/review_*.json
 
 # Write a temporary read-only opencode config into the target project.
-# This enforces that all opencode agents spawned for review cannot edit files.
+# This enforces that review agents (a) cannot edit files and (b) do NOT spin
+# up any MCP servers. Every `opencode run` otherwise launches all globally
+# configured MCP servers (exa, github, sesame, figma, notebook, ...), each a
+# separate long-lived process. With several agents in parallel that balloons
+# into dozens of processes that swamp the machine -- and code reviewers never
+# need MCP tools (they just read a git diff and write JSON). So we disable
+# every MCP server found in the user's global config for the review run.
 OPENCODE_CONFIG_DIR="$TARGET_DIR/.opencode"
 OPENCODE_CONFIG_FILE="$OPENCODE_CONFIG_DIR/opencode.json"
 OPENCODE_CONFIG_EXISTED=false
@@ -188,9 +194,39 @@ if [ -f "$OPENCODE_CONFIG_FILE" ]; then
   OPENCODE_CONFIG_EXISTED=true
   cp "$OPENCODE_CONFIG_FILE" "$OPENCODE_CONFIG_FILE.council-backup"
 fi
-cat > "$OPENCODE_CONFIG_FILE" << 'EOF'
+
+# Locate the user's global opencode config to learn which MCP servers exist.
+GLOBAL_OPENCODE_CONFIG=""
+for candidate in \
+  "${XDG_CONFIG_HOME:-$HOME/.config}/opencode/opencode.json" \
+  "$HOME/.config/opencode/opencode.json"; do
+  if [ -f "$candidate" ]; then
+    GLOBAL_OPENCODE_CONFIG="$candidate"
+    break
+  fi
+done
+
+# Build a JSON object that disables every MCP server defined globally. Falls
+# back to an empty object if no global config or python3 is available.
+MCP_DISABLE_JSON="{}"
+if [ -n "$GLOBAL_OPENCODE_CONFIG" ] && command -v python3 &> /dev/null; then
+  MCP_DISABLE_JSON=$(GLOBAL_OPENCODE_CONFIG="$GLOBAL_OPENCODE_CONFIG" python3 -c '
+import json, os
+try:
+    with open(os.environ["GLOBAL_OPENCODE_CONFIG"]) as f:
+        cfg = json.load(f)
+    names = list((cfg.get("mcp") or {}).keys())
+    print(json.dumps({n: {"enabled": False} for n in names}))
+except Exception:
+    print("{}")
+')
+fi
+
+# Emit the review config. The "mcp" block disables every server by name so no
+# MCP processes are spawned for the duration of the review.
+cat > "$OPENCODE_CONFIG_FILE" << EOF
 {
-  "$schema": "https://opencode.ai/config.json",
+  "\$schema": "https://opencode.ai/config.json",
   "permission": {
     "edit": "deny",
     "bash": {
@@ -201,7 +237,8 @@ cat > "$OPENCODE_CONFIG_FILE" << 'EOF'
     "build": {
       "tools": { "write": false, "edit": false }
     }
-  }
+  },
+  "mcp": $MCP_DISABLE_JSON
 }
 EOF
 
