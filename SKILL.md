@@ -33,14 +33,7 @@ Determine the user's project directory from the conversation context. This is ty
 Run this skill's review script and **pass the user's project directory as an argument**:
 
 ```bash
-<skill-root>/scripts/run-reviews.sh /path/to/users/project
-```
-
-Resolve `<skill-root>` to the directory containing this `SKILL.md`.
-
-For example, if the user is working in `/Users/you/git/jupyter_server`:
-```bash
-<skill-root>/scripts/run-reviews.sh /Users/you/git/jupyter_server
+~/.agents/skills/council/scripts/run-reviews.sh /path/to/users/project
 ```
 
 **IMPORTANT**: Always pass the full path to the user's project as the first argument.
@@ -55,10 +48,10 @@ the committed prompt template is never edited.
 
 ```bash
 # Review a PR against its actual base branch
-<skill-root>/scripts/run-reviews.sh /Users/you/git/project "Review the changes on this branch against base branch PREX-1553 (use 'git diff PREX-1553...HEAD'), not main."
+~/.agents/skills/council/scripts/run-reviews.sh /Users/you/git/project "Review the changes on this branch against base branch XYZ (use 'git diff XYZ...HEAD'), not main."
 
 # Focus the review
-<skill-root>/scripts/run-reviews.sh /Users/you/git/project "Focus on security of the new upload endpoint; skip style nits."
+~/.agents/skills/council/scripts/run-reviews.sh /Users/you/git/project "Focus on security of the new upload endpoint; skip style nits."
 ```
 
 Ask the user for the base branch when reviewing a PR, since the default prompt
@@ -145,7 +138,7 @@ After writing the combined report, summarize the key findings:
 
 ## Configuration
 
-All configuration lives in `<skill-root>/config.yaml`:
+All configuration lives in `~/.agents/skills/council/config.yaml`:
 
 ```yaml
 # Each agent specifies its own backend and model.
@@ -159,44 +152,4 @@ agents:
 
   - backend: opencode
     model: google/gemini-3.1-pro
-```
-
-### Backends
-
-Each agent entry requires a `backend` and a `model`:
-
-| Backend | CLI command | `model` format | Requires |
-|---------|-----------|---------------|----------|
-| `claude-code` | `claude -p` | Alias (`sonnet`, `opus`) or full name (`claude-opus-4-7`) | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + Anthropic account |
-| `codex` | `codex exec` | Model name (e.g. `gpt-5.3-codex`) | [Codex CLI](https://github.com/openai/codex) + ChatGPT plan or API key |
-| `opencode` | `opencode run` | `provider/model` (e.g. `anthropic/claude-opus-4-7`) | [OpenCode CLI](https://opencode.ai) + provider API keys |
-| `cursor` | `cursor-agent` | Model name (e.g. `gemini-3.1-pro`) | [Cursor CLI](https://cursor.com/cli) + subscription |
-
-### Discovering available models
-
-- **Claude Code**: `claude --model` (aliases: `sonnet`, `opus`, `haiku`)
-- **Codex**: `/model` inside `codex` TUI, or see [Codex models docs](https://developers.openai.com/codex/models)
-- **OpenCode**: `opencode models`
-- **Cursor**: `cursor-agent --list-models`
-
-### Other customization
-
-- **Review focus**: Edit `<skill-root>/prompts/review-prompt.md`
-- **Thinking depth**: Add "think hard" or "ultrathink" to the prompt
-
-## Files
-
-```
-council/
-├── SKILL.md              # This file
-├── config.yaml           # Backend and model configuration
-├── scripts/
-│   └── run-reviews.sh    # Parallel review runner
-└── prompts/
-    └── review-prompt.md  # Review prompt template
-
-# Output is saved to the user's project:
-<project>/.reviews/
-├── review_*.json         # Individual agent outputs
-└── COMBINED_REVIEW.md    # Synthesized report
 ```
