@@ -10,6 +10,14 @@
 
 set -e
 
+# Enable job control so each backgrounded agent becomes the leader of its
+# own process group. This lets us kill an agent and ALL of its forked
+# children (opencode spawns server/worker subprocesses) via the group,
+# without ever signalling this script's own process group (which is shared
+# with the caller's interactive shell). macOS ships bash 3.2 with no
+# setsid, so `set -m` is the portable way to get per-job process groups.
+set -m
+
 # --- Argument validation ---
 
 if [ -z "$1" ]; then
@@ -219,18 +227,27 @@ collect_descendants() {
 kill_tree() {
   local sig="$1"; shift
   local root
+  local self_pgid
+  # The process group we must NEVER signal: our own (shared with the caller).
+  self_pgid=$(ps -o pgid= -p "$$" 2>/dev/null | tr -d ' ')
   for root in "$@"; do
     [ -z "$root" ] && continue
-    local p
-    for p in $(collect_descendants "$root"); do
-      kill "-$sig" "$p" 2>/dev/null || true
-    done
-    # Also target the actual process group the root belongs to, in case
-    # a child detached into a new group we did not capture above.
+    # With `set -m`, each backgrounded agent is a process-group leader, so the
+    # job PID equals its PGID. Killing that group reaches the agent and every
+    # subprocess it forked (e.g. opencode's server/workers).
     local pgid
     pgid=$(ps -o pgid= -p "$root" 2>/dev/null | tr -d ' ')
-    if [ -n "$pgid" ]; then
+    if [ -n "$pgid" ] && [ "$pgid" != "$self_pgid" ]; then
       kill "-$sig" "-$pgid" 2>/dev/null || true
+    fi
+    # Belt-and-suspenders: also walk the visible descendant tree by PID, but
+    # only if the group kill was unavailable (pgid empty or == our own group).
+    if [ -z "$pgid" ] || [ "$pgid" = "$self_pgid" ]; then
+      local p
+      for p in $(collect_descendants "$root"); do
+        [ "$p" = "$$" ] && continue
+        kill "-$sig" "$p" 2>/dev/null || true
+      done
     fi
   done
 }
@@ -294,12 +311,31 @@ sanitize_model() {
   echo "$1" | tr '/' '__'
 }
 
+# Maximum number of agents to run concurrently. Launching all agents at once
+# (each opencode agent forks several subprocesses) can overwhelm the machine,
+# so we throttle to MAX_PARALLEL in flight at a time. Override via env if you
+# have a beefier box, e.g. MAX_PARALLEL=8 run-reviews.sh ...
+MAX_PARALLEL="${MAX_PARALLEL:-4}"
+
+# Block until fewer than MAX_PARALLEL background jobs are running.
+throttle() {
+  # `jobs -p -r` lists PIDs of currently running background jobs.
+  while [ "$(jobs -p -r 2>/dev/null | wc -l | tr -d ' ')" -ge "$MAX_PARALLEL" ]; do
+    # Wait for at least one job to finish, then re-check. `wait -n` is not in
+    # bash 3.2, so fall back to a short sleep poll.
+    sleep 0.5
+  done
+}
+
 SANITIZED_MODELS=()
 for i in "${!MODELS[@]}"; do
   model="${MODELS[$i]}"
   backend="${BACKENDS[$i]}"
   safe_name=$(sanitize_model "$model")
   SANITIZED_MODELS+=("$safe_name")
+  # Respect the concurrency cap before spawning the next agent.
+  throttle
+
   echo "  ⏳ Starting: $model ($backend)"
 
   case "$backend" in
